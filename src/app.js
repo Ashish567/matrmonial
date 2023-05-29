@@ -5,15 +5,16 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
-const hpp = require('hpp');
+// const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
+// const bodyParser = require('body-parser');
 const compression = require('compression');
 const cors = require('cors');
 
 const AppError = require('./Utils/appError');
 const globalErrorHandler = require('./Controllers/errorController');
-// const userRouter = require('./Routes/userRoutes');
+const otpRouter = require('./Routes/otpRoutes');
+
 const app = express();
 app.use(express.json());
 
@@ -72,6 +73,7 @@ app.use((req, res, next) => {
 // app.use('/api/v1/users', userRouter);
 // app.use('/api/v1/project', projectRouter);
 // app.use('/api/v1/task', taskRouter);
+app.use('/api/v1/otp', otpRouter);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
