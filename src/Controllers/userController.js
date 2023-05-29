@@ -10,6 +10,9 @@ const {
 } = require('../Schema/userShemaOneValidate');
 const userModel = require('../Models/userModel');
 
+userModel.createIndexes({
+  locationString: 'text'
+});
 function joiValidateForProj(obj, page) {
   switch (page) {
     case 1:
@@ -84,6 +87,41 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
     status: 'success',
     data: {
       data: user
+    }
+  });
+});
+
+exports.getUsers = catchAsync(async (req, res, next) => {
+  const { type } = req.query;
+  let users;
+  if (type === 'job') {
+    users = userModel.find({
+      job: req.query.job
+    });
+  }
+  if (type === 'education') {
+    users = userModel.find({
+      job: req.query.education
+    });
+  }
+  if (type === 'interests') {
+    users = userModel.find({
+      interests: {
+        $in: [req.query.interests]
+      }
+    });
+  }
+  if (type === 'location') {
+    users = userModel.find({
+      $text: {
+        $search: req.query.location
+      }
+    });
+  }
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: users
     }
   });
 });
