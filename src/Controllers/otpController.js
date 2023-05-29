@@ -4,7 +4,6 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const catchAsync = require('./../Utils/catchAsync');
-const AppError = require('./../Utils/appError');
 const otphemaValidate = require('../Schema/otpValidateSchema');
 const otpModel = require('../Models/otpModel');
 
@@ -31,32 +30,32 @@ function compareAsync(param1, param2) {
   });
 }
 
-async function smsVerifyCallback(error, responseBody, res, verifyCode) {
-  if (error === null) {
-    const hashedOtp = await bcrypt.hash(verifyCode, 10);
-    // Display the response body in the console for debugging purposes. In your production code, you would likely remove this.
-    const newOtpRequest = await otpModel.create({
-      phoneNo: responseBody.phoneNo,
-      countryCode: responseBody.countryCode,
-      hashedOtp
-    });
-    res.status(200).json({
-      status: 'success',
-      data: {
-        data: newOtpRequest
-      }
-    });
-  } else {
-    res.status(200).json({
-      status: 'failed',
-      message: 'something went wrong!'
-    });
-  }
-}
+// async function smsVerifyCallback(error, responseBody, res, verifyCode) {
+//   console.log(verifyCode);
+//   if (error === null) {
+//     const hashedOtp = await bcrypt.hash(verifyCode, 10);
+//     // Display the response body in the console for debugging purposes. In your production code, you would likely remove this.
+//     const newOtpRequest = await otpModel.create({
+//       phoneNo: responseBody.phoneNo,
+//       countryCode: responseBody.countryCode,
+//       hashedOtp
+//     });
+//     res.status(200).json({
+//       status: 'success',
+//       data: {
+//         data: newOtpRequest
+//       }
+//     });
+//   } else {
+//     res.status(200).json({
+//       status: 'failed',
+//       message: 'something went wrong!'
+//     });
+//   }
+// }
 
 exports.getOtp = catchAsync(async (req, res, next) => {
   const result = joiValidateForProj({ ...req.body });
-
   if (result.error) {
     throw new Error(result.error.details[0].message);
   }
@@ -65,7 +64,32 @@ exports.getOtp = catchAsync(async (req, res, next) => {
   const params = {
     verify_code: verifyCode
   };
-  client.verify.sms(smsVerifyCallback, req.body, params);
+  client.verify.sms(
+    async function smsVerifyCallback(error) {
+      if (error === null) {
+        const hashedOtp = await bcrypt.hash(verifyCode, 10);
+        // Display the response body in the console for debugging purposes. In your production code, you would likely remove this.
+        const newOtpRequest = await otpModel.create({
+          phoneNo: req.body.phoneNo,
+          countryCode: req.body.countryCode,
+          hashedOtp
+        });
+        res.status(200).json({
+          status: 'success',
+          data: {
+            data: newOtpRequest
+          }
+        });
+      } else {
+        res.status(200).json({
+          status: 'failed',
+          message: 'something went wrong!'
+        });
+      }
+    },
+    req.body,
+    params
+  );
 });
 
 exports.verifyOtp = catchAsync(async (req, res, next) => {
@@ -84,10 +108,10 @@ exports.verifyOtp = catchAsync(async (req, res, next) => {
   if (resp) {
     const token = jwt.sign(requestOtp, process.env.SECRET_KEY, {
       algorithm: 'HS256',
-      expiresIn: '1000m'
+      expiresIn: '1000m' // Token Expiration
     });
     res.cookie('jwt', token, {
-      expires: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+      expires: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // Cookie Expiration
       httpOnly: true,
       secure: req.secure || req.headers['x-forwarded-proto'] === 'https'
     });

@@ -14,6 +14,7 @@ const cors = require('cors');
 const AppError = require('./Utils/appError');
 const globalErrorHandler = require('./Controllers/errorController');
 const otpRouter = require('./Routes/otpRoutes');
+const userRouter = require('./Routes/userRoutes');
 
 const app = express();
 app.use(express.json());
@@ -70,10 +71,8 @@ app.use((req, res, next) => {
 });
 
 // 3) ROUTES
-// app.use('/api/v1/users', userRouter);
-// app.use('/api/v1/project', projectRouter);
-// app.use('/api/v1/task', taskRouter);
 app.use('/api/v1/otp', otpRouter);
+app.use('/api/v1/user', userRouter);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
