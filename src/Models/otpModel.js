@@ -13,6 +13,10 @@ const otpSchema = mongoose.Schema(
     hashedOtp: {
       type: mongoose.Schema.Types.String,
       default: ''
+    },
+    otpVerified: {
+      type: mongoose.Schema.Types.Boolean,
+      default: false
     }
   },
   { timestamps: true }

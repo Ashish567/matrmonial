@@ -100,7 +100,9 @@ exports.verifyOtp = catchAsync(async (req, res, next) => {
   } else if (!otp) {
     throw new Error('OTP is a must!');
   }
-  const requestOtp = await otpModel.findById(otpRequestId);
+  const requestOtp = await otpModel.findByIdAndUpdate(otpRequestId, {
+    otpVerified: true
+  });
   if (!requestOtp) {
     throw new Error('Something went wrong!');
   }
